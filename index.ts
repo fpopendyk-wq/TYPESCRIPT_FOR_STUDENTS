@@ -15,6 +15,13 @@ enum HttpStatusCodes {
     Forbidden = 403,
 }
 
+// Custom Error Interface to replace 'any'
+interface CustomAppError {
+    message: string;
+    code: number;
+    details?: string;
+}
+
 type UserType = 'user' | 'admin';
 
 interface User {
@@ -45,7 +52,7 @@ type SubscribeFunc<T> = (observer: Observer<T>) => TeardownFunc;
 
 interface ObserverHandlers<T> {
     next?: (value: T) => void;
-    error?: (error: any) => void;
+    error?: (error: CustomAppError) => void;
     complete?: () => void;
 }
 
@@ -69,7 +76,7 @@ class Observer<T> {
         }
     }
 
-    error(error: any): void {
+    error(error: CustomAppError): void {
         if (!this.isUnsubscribed) {
             if (this.handlers.error) {
                 this.handlers.error(error);
@@ -159,8 +166,11 @@ const handleRequest = (request: CustomRequest): Result => {
     return { status: HttpStatusCodes.Ok };
 };
 
-const handleError = (error: any): Result => {
-    // handling of error
+const handleError = (error: CustomAppError): Result => {
+    console.error(`Error [${error.code}]: ${error.message}`);
+    if (error.details) {
+        console.error(`Details: ${error.details}`);
+    }
     return { status: HttpStatusCodes.InternalServerError };
 };
 
